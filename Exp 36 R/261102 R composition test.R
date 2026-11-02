@@ -20,6 +20,7 @@ multiply_by_colour <- function(img_gray, colour_hex = "#FFFFFF", brightness = 10
     image_composite(canvas, img_gray, operator = "Multiply")
 }
 
+## Helper for merging channels
 merge_channels <- function(image_list, operator = "Screen") {
     composite <- image_list[[1]]
     if (length(image_list) > 1) {
@@ -30,15 +31,8 @@ merge_channels <- function(image_list, operator = "Screen") {
     return(composite)
 }
 
-image1 <- image_read(paste0(folder, "/EXO1_Day00_main_hoechst.tiff"))
-image1_col <- multiply_by_colour(image1, "cyan", 200)
-image1_col
 
-
-h <- image_read()
-
-
-
+## Helper for reading in images from a vector of filenames
 read_many_images <- function(filenames_vector, folder = NULL) {
     lapply(filenames_vector, function(f) {
         if (!is.null(folder) && !is.na(folder)) {
@@ -48,6 +42,7 @@ read_many_images <- function(filenames_vector, folder = NULL) {
     })
 }
 
+## Helper of getting list of c(w, h) dimensions from a list of images
 get_image_dimensions <- function(images_list) {
     lapply(images_list, function(i) {
         info <- image_info(i)
@@ -55,9 +50,39 @@ get_image_dimensions <- function(images_list) {
     })
 }
 
-check_image_dimensions <- function(dimensions_list, images_count, nrow, ncol) {
+
+
+## Channel dimensions - should have identical dimensions between channels of the same image
+check_channel_dimensions <- function(dimensions_list, id = "") {
+    channels <- names(dimensions_list)
+    
+    widths <- sapply(dimensions_list, `[[`, 1)
+    panel_width <- unique(widths)
+    if (length(panel_width) != 1) {
+        abort(
+            paste0(id, "Channels have different widths:", paste(channels, widths, sep = ": ", collapse = ", ")), 
+            call = rlang::caller_env()
+        )
+    }
+    
+    heights <- sapply(dimensions_list, `[[`, 2)
+    panel_height <- unique(heights)
+    if (length(panel_height) != 1) {
+        abort(
+            paste0(id, "Channels have different heights:", paste(channels, heights, sep = ": ", collapse = ", ")), 
+            call = rlang::caller_env()
+        )
+    }
+    
+    return(c(width = panel_width, height = panel_height))
+}
+
+
+
+## Panel dimensions - should have the same width within each column, and the same height within each row
+check_panel_dimensions <- function(dimensions_list, panels_count, nrow, ncol) {
     col_widths <- sapply(1:ncol, function(i) {
-        in_col_TF <- 1:images_count %% ncol == i %% ncol
+        in_col_TF <- 1:panels_count %% ncol == i %% ncol
         in_col_dims_list <- dimensions_list[in_col_TF]
         in_col_widths <- sapply(in_col_dims_list, `[[`, 1)
         
@@ -73,7 +98,7 @@ check_image_dimensions <- function(dimensions_list, images_count, nrow, ncol) {
     })
     
     row_heights <- sapply(1:nrow, function(i) {
-        in_row_TF <- 1:images_count %% nrow == i %% nrow
+        in_row_TF <- 1:panels_count %% nrow == i %% nrow
         in_row_dims_list <- dimensions_list[in_row_TF]
         in_row_heights <- sapply(in_row_dims_list, `[[`, 2)
         
@@ -93,21 +118,46 @@ check_image_dimensions <- function(dimensions_list, images_count, nrow, ncol) {
 
 ## Small function for making a single set of 4
 ## Provide: vector of filenames, vector of corresponding channel names, dimensions of layout, list of which channels should be present in each panel (as the book reads), separation between channels in px
-assemble_panel <- function(filenames_vector, channels_vector, nrow, ncol, channels_list, separation = "10", folder = NULL, background_colour = "black", border_colour = "white") {
+assemble_panels <- function(filenames_vector, channels_vector, colours_vector, brightness_vector, nrow, ncol, channels_list, separation = "10", folder = NULL, background_colour = "black", border_colour = "white") {
     images_count <- length(filenames_vector)
     images_list <- read_many_images(filenames_vector, folder)
     names(images_list) <- channels_vector
+    image_dimensions_list <- get_image_dimensions(images_list)
+    
+    names(colours_vector) <- channels_vector
+    names(brightness_vector) <- channels_vector
     
     
+    ## Assemble and merge panels
+    panels_list <- lapply(seq_along(channels_list), function(i) {
+        selected_channels <- channels_list[[i]]
+        selected_images_list <- images_list[selected_channels]
+        selected_images_dimensions <- get_image_dimensions(selected_images_list)
+        panel_dimensions <- check_channel_dimensions(selected_images_dimensions, id = paste0("[Panel ", i, "] "))
+        
+        ## Can now assume that all images have equal dimensions, stored as [1] and [2] in panel_dimensions
+        panel_canvas <- image_blank(panel_dimensions[1], panel_dimensions[2], color = background_colour)
+        
+        coloured_images_list <- lapply(selected_channels, function(channel) {
+            multiply_by_colour(selected_images_list[channel][[1]], colours_vector[channel][[1]], brightness_vector[channel][[1]])
+        })
+        merged_image <- merge_channels(
+            list(
+                panel_canvas,
+                merge_channels(coloured_images_list)
+            )
+        )
+    })
     
+    return(panels_list)
     
     ## This all needs to happen later once the images have been merged into panels - the ordered list comes from channels_list,
     ## whereas input images can be supplied in any order and any number and are then pulled by channel name into each panel
-    panels_count <- length(channels_list)
+    panels_count <- length(panels_list)
     
     ## Extract dimensions and check they are consistent within individual cols and rows
-    image_dimensions_list <- get_image_dimensions(images_list)
-    panel_dimensions <- check_image_dimensions(image_dimensions_list, panels_count, nrow, ncol)
+    panel_dimensions_list <- get_panel_dimensions(panels_list)
+    panel_dimensions <- check_panel_dimensions(panel_dimensions_list, panels_count, nrow, ncol)
     
     ## Set up full canvas for this set
     full_canvas <- image_blank(
@@ -116,7 +166,7 @@ assemble_panel <- function(filenames_vector, channels_vector, nrow, ncol, channe
         color = border_colour
     )
     
-    ## Iterate over panels
+    ## Add panels in at the right locations
     
 }
 
@@ -124,7 +174,9 @@ assemble_panel <- function(filenames_vector, channels_vector, nrow, ncol, channe
 
 
 ## Testing
-l <- read_many_images(c("EXO1_Day00_main_hoechst.tiff", "EXO1_Day00_main_map2.tiff", "EXO1_Day00_main_target.tiff", "EXO1_HEK293T_main_map2.tiff"), "imagej_export_max")
+l <- read_many_images(c("EXO1_Day14_main_hoechst.tiff", "EXO1_Day00_main_map2.tiff", "EXO1_Day00_main_target.tiff"), "imagej_export_max")
+cv <- c("H", "M", "T")
+names(l) <- cv
 d <- get_image_dimensions(l)
 
 channels_list <- list(
@@ -132,4 +184,24 @@ channels_list <- list(
     "H",
     "M",
     "T"
+)
+
+
+assemble_panels(
+    c("EXO1_Day14_main_hoechst.tiff", "EXO1_Day14_main_map2.tiff", "EXO1_Day14_main_target.tiff"),
+    c("H", "M", "T"),
+    c("blue", "red", "green"),
+    rep(100, 3),
+    nrow = 2, 
+    ncol = 2,
+    channels_list = list(
+        c("H", "T", "M"),
+        "H",
+        "M",
+        "T"
+    ),
+    separation = 10,
+    folder = "imagej_export_max",
+    background_colour = "black",
+    border_colour = "white"
 )
