@@ -117,25 +117,31 @@ check_panel_dimensions <- function(dimensions_list, panels_count, nrow, ncol) {
 }
 
 ## Function for determining offsets based on a capital E
-calculate_E_offset <- function(font_size, font_family, font_style, font_weight) {
-    mat <- image_blank(ceiling(font_size * 2), ceiling(font_size * 2), "white") |>
-        image_annotate("E", size = font_size, font = font_family, style = font_style, weight = font_weight, location = "+0+0") |>
+calculate_E_offset <- function(font_size, font_family, font_style, font_weight, font_angle = 0) {
+    canvas_dim <- ceiling(font_size * 4)
+    draw_offset <- round(ceiling(font_size * 1.5))
+    
+    mat <- image_blank(canvas_dim, canvas_dim, "white") |>
+        image_annotate("E", size = font_size, font = font_family, style = font_style, weight = font_weight, degrees = font_angle, location = paste0("+", draw_offset, "+", draw_offset)) |>
+        image_threshold(type = "white", threshold = "50%") |>
         as.raster()
     
     ## Locate non-white pixel indices (the ink of 'E')
     ink_pixels <- which(mat != "#ffffff" & mat != "#ffffffff", arr.ind = TRUE)
     
     ## Compute 0-indexed pixel offsets relative to top-left (0,0)
-    e_top    <- min(ink_pixels[, 1]) - 1
-    e_bottom <- max(ink_pixels[, 1])
-    e_left   <- min(ink_pixels[, 2]) #- 1    ## The -1 is technically correct, but the letters render with a very dim left edge so bumping that by 1 to the first bright pixel
-    e_right  <- max(ink_pixels[, 2])
+    e_top    <- min(ink_pixels[, 1]) - draw_offset - 1
+    e_bottom <- max(ink_pixels[, 1]) - draw_offset
+    e_left   <- min(ink_pixels[, 2]) - draw_offset - 1
+    e_right  <- max(ink_pixels[, 2]) - draw_offset
     
     return(list(
         left   = e_left,
         top    = e_top,
         bottom = e_bottom,
-        right  = e_right
+        right  = e_right,
+        height = e_bottom - e_top,
+        width  = e_right - e_left
     ))
 }
 
@@ -204,6 +210,9 @@ assemble_panels <- function(
     labels_top_E <- calculate_E_offset(labels_size_top, labels_font_top, labels_style_top, labels_weight_top)
     labels_bottom_E <- calculate_E_offset(labels_size_bottom, labels_font_bottom, labels_style_bottom, labels_weight_bottom)
     titles_E <- calculate_E_offset(titles_size, titles_font, titles_style, titles_weight)
+    titles_E_90  <- calculate_E_offset(titles_size, titles_font, titles_style, titles_weight, 90)
+    titles_E_270 <- calculate_E_offset(titles_size, titles_font, titles_style, titles_weight, 270)
+    
     
     ## Add panels in at the right locations
     current_width_px <- figure_border_left
@@ -253,7 +262,7 @@ assemble_panels <- function(
             
             
             ## Add titles to image if it is the right time - col titles when iterating over cols
-            if (!any(is.null(labels_bottom)) && !any(is.na(labels_bottom))) {
+            if (!any(is.null(col_titles)) && !any(is.na(col_titles))) {
                 if (i == 1 && col_titles_side == "top") {
                     this_title <- col_titles[j]
                     this_title_width <- get_text_width(this_title, titles_size, titles_font, titles_style, titles_weight)
@@ -264,7 +273,7 @@ assemble_panels <- function(
                         composited, 
                         text = this_title, 
                         color = titles_colour,
-                        location = paste0("+", this_title_x, "+", this_title_y),
+                        location = paste0("+", round(this_title_x), "+", round(this_title_y)),
                         gravity = "northwest",
                         font = titles_font,
                         style = titles_style,
@@ -281,7 +290,49 @@ assemble_panels <- function(
                         composited, 
                         text = this_title, 
                         color = titles_colour,
-                        location = paste0("+", this_title_x, "+", this_title_y),
+                        location = paste0("+", round(this_title_x), "+", round(this_title_y)),
+                        gravity = "northwest",
+                        font = titles_font,
+                        style = titles_style,
+                        weight = titles_weight,
+                        size = titles_size
+                    )
+                }
+            }
+            
+            
+            ## Add titles to image if it is the right time - row titles when iterating over row
+            if (!any(is.null(row_titles)) && !any(is.na(row_titles))) {
+                if (j == 1 && row_titles_side == "left") {
+                    this_title <- row_titles[i]
+                    this_title_width <- get_text_width(this_title, titles_size, titles_font, titles_style, titles_weight)
+                    this_title_x <- current_width_px - titles_position - titles_E_270$width
+                    this_title_y <- current_height_px + (panel_dimensions$row_heights[i] + this_title_width) / 2
+                    
+                    composited <- image_annotate(
+                        composited, 
+                        degrees = 270,
+                        text = this_title, 
+                        color = titles_colour,
+                        location = paste0("+", round(this_title_x), "+", round(this_title_y)),
+                        gravity = "northwest",
+                        font = titles_font,
+                        style = titles_style,
+                        weight = titles_weight,
+                        size = titles_size
+                    )
+                } else if (j == ncol && row_titles_side == "right") {
+                    this_title <- row_titles[i]
+                    this_title_width <- get_text_width(this_title, titles_size, titles_font, titles_style, titles_weight)
+                    this_title_x <- current_width_px + titles_position - titles_E_90$left + panel_dimensions$col_widths[j]
+                    this_title_y <- current_height_px + (panel_dimensions$row_heights[i] - this_title_width) / 2
+                    
+                    composited <- image_annotate(
+                        composited, 
+                        degrees = 90,
+                        text = this_title, 
+                        color = titles_colour,
+                        location = paste0("+", round(this_title_x), "+", round(this_title_y)),
                         gravity = "northwest",
                         font = titles_font,
                         style = titles_style,
@@ -296,6 +347,9 @@ assemble_panels <- function(
             current_panel <- current_panel + 1
             current_width_px <- current_width_px + panel_dimensions$col_widths[j] + panel_border
         }
+    
+        
+        
         ## Iterate row, reset column to leftmost
         current_width_px <- figure_border_left
         current_height_px <- current_height_px + panel_dimensions$row_heights[i] + panel_border
@@ -324,8 +378,10 @@ create_simple_figure <- function(
         border_colour = "#FFFFFF",
         row_titles = NULL,
         row_titles_side = "left",
+        row_titles_bar = FALSE,
         col_titles = NULL,
         col_titles_side = "top",
+        col_titles_bar = FALSE,
         titles_colour = "#000000",
         titles_font = "",
         titles_size = 75,
@@ -485,9 +541,10 @@ create_simple_figure(
     c(100, 100, 100),
     nrow = 2, 
     ncol = 2,
-    col_titles = c("E-left", "E-right"),
-    col_titles_side = "bottom",
-    row_titles = c("top", "bottom"),
+    col_titles = c("E-left-p", "E-right"),
+    col_titles_side = "top",
+    row_titles = c("E-top", "E-bottom"),
+    row_titles_side = "right",
     titles_size = 75,
     titles_colour = "#000000",
     titles_position = 20,
@@ -502,6 +559,7 @@ create_simple_figure(
     background_colour = "#000000",
     border_colour = "#FFFFFF",
     labels_top = c("A", "B", "C", "E"),
+    labels_colours_top = "#FFFFFF",
     labels_bottom = c("Merge", "Hoechst", "MAP2", "EXO1"),
     labels_colours_bottom = c("#FFFFFF", "#0000FF", "#FF0000", "#00FF00"),
     labels_position = 30
