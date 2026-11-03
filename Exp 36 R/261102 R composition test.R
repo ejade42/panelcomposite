@@ -118,7 +118,43 @@ check_panel_dimensions <- function(dimensions_list, panels_count, nrow, ncol) {
 
 ## Small function for making a single set of 4
 ## Provide: vector of filenames, vector of corresponding channel names, dimensions of layout, list of which channels should be present in each panel (as the book reads), separation between channels in px
-assemble_panels <- function(filenames_vector, channels_vector, colours_vector, brightness_vector, nrow, ncol, channels_list, separation = "10", folder = NULL, background_colour = "black", border_colour = "white") {
+assemble_panels <- function(
+        filenames_vector, 
+        channels_vector, 
+        colours_vector, 
+        brightness_vector, 
+        nrow, 
+        ncol, 
+        channels_list, 
+        separation = 20, 
+        folder = NULL, 
+        background_colour = "#000000", 
+        border_colour = "#FFFFFF",
+        labels_top = NULL,
+        labels_bottom = NULL,
+        labels_colours_top = "#FFFFFF",
+        labels_colours_bottom = "#FFFFFF",
+        labels_font = "",
+        labels_size = 50,
+        labels_position = 20,
+        labels_style = "normal",
+        labels_weight = 400
+) {
+    ## Process labels
+    if (!any(is.null(labels_top)) && !any(is.na(labels_top))) {
+        if (length(labels_colours_top) == 1) {labels_colours_top <- rep(labels_colours_top, length(labels_top))}
+        if (length(labels_top) != length(labels_colours_top)) {abort(paste0("Length of labels colour vector must be 1 or the same length as labels vector. Current lengths: ", paste(length(labels_top), length(labels_colours_top), sep = ", ")))}
+        if (length(labels_top) != length(channels_list)) {abort(paste0("Labels vector must be NULL or the same lengths as channels list. Current lengths: ", paste(length(labels_top), length(channels_list), sep = ", ")))}
+        
+    }
+    if (!any(is.null(labels_bottom)) && !any(is.na(labels_bottom))) {
+        if (length(labels_colours_bottom) == 1) {labels_colours_bottom <- rep(labels_colours_bottom, length(labels_bottom))}
+        if (length(labels_bottom) != length(labels_colours_bottom)) {abort(paste0("Length of labels colour vector must be 1 or the same length as labels vector. Current lengths: ", paste(length(labels_bottom), length(labels_colours_bottom), sep = ", ")))}
+        if (length(labels_bottom) != length(channels_list)) {abort(paste0("Labels vector must be NULL or the same lengths as channels list. Current lengths: ", paste(length(labels_bottom), length(channels_list), sep = ", ")))}
+    }
+    
+    
+    ## Read in images
     images_count <- length(filenames_vector)
     images_list <- read_many_images(filenames_vector, folder)
     names(images_list) <- channels_vector
@@ -169,16 +205,51 @@ assemble_panels <- function(filenames_vector, channels_vector, colours_vector, b
     composited <- full_canvas
     for (i in 1:nrow) {
         for (j in 1:ncol) {
+            this_panel <- panels_list[[current_panel]]
+            
+            ## Add labels to panel
+            if (!any(is.null(labels_top)) && !any(is.na(labels_top))) {
+                this_panel <- image_annotate(
+                    this_panel, 
+                    text = labels_top[current_panel], 
+                    color = labels_colours_top[current_panel], 
+                    location = paste0("+", labels_position, "+", labels_position), 
+                    gravity = "northwest",
+                    font = labels_font,
+                    style = labels_style,
+                    weight = labels_weight,
+                    size = labels_size
+                )
+            }
+            if (!any(is.null(labels_bottom)) && !any(is.na(labels_bottom))) {
+                this_panel <- image_annotate(
+                    this_panel, 
+                    text = labels_bottom[current_panel], 
+                    color = labels_colours_bottom[current_panel], 
+                    location = paste0("+", labels_position, "+", labels_position), 
+                    gravity = "southwest",
+                    font = labels_font,
+                    style = labels_style,
+                    weight = labels_weight,
+                    size = labels_size
+                )
+            }
+            
+            ## Add panel to image
             composited <- image_composite(
                 composited,
-                panels_list[[current_panel]],
+                this_panel,
                 offset = paste0("+", current_width_px, "+", current_height_px),
                 gravity = "northwest"
             )
             
+            
+            
+            ## Iterate column
             current_panel <- current_panel + 1
             current_width_px <- current_width_px + panel_dimensions$col_widths[j] + separation
         }
+        ## Iterate row, reset column to leftmost
         current_width_px <- 0
         current_height_px <- current_height_px + panel_dimensions$row_heights[i] + separation
     }
@@ -206,8 +277,8 @@ channels_list <- list(
 assemble_panels(
     c("EXO1_Day14_main_hoechst.tiff", "EXO1_Day14_main_map2.tiff", "EXO1_Day14_main_target.tiff"),
     c("H", "M", "T"),
-    c("blue", "red", "green"),
-    c(100, 100, 1000),
+    c("#0000FF", "#FF0000", "#00FF00"),
+    c(100, 100, 100),
     nrow = 2, 
     ncol = 2,
     channels_list = list(
@@ -216,8 +287,12 @@ assemble_panels(
         "M",
         "T"
     ),
-    separation = 10,
+    separation = 20,
     folder = "imagej_export_max",
-    background_colour = "black",
-    border_colour = "white"
+    background_colour = "#000000",
+    border_colour = "#FFFFFF",
+    labels_top = c("A", "B", "C", "D"),
+    labels_bottom = c("Merge", "Hoechst", "MAP2", "EXO1"),
+    labels_colours_bottom = c("#FFFFFF", "#0000FF", "#FF0000", "#00FF00"),
+    labels_position = 30
 )
