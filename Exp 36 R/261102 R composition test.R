@@ -118,13 +118,16 @@ check_panel_dimensions <- function(dimensions_list, panels_count, nrow, ncol) {
 
 
 
-## Small function for making a single set of 4
-## Provide: vector of filenames, vector of corresponding channel names, dimensions of layout, list of which channels should be present in each panel (as the book reads), separation between channels in px
-assemble_panel <- function(
+## Function for assembling panels from a panels_list
+assemble_panels <- function(
         panels_list,
         nrow,
         ncol,
-        separation = 20, 
+        panel_border = 20, 
+        figure_border_top = 100,
+        figure_border_left = 100,
+        figure_border_bottom = 20,
+        figure_border_right = 20,
         background_colour = "#000000", 
         border_colour = "#FFFFFF",
         labels_top = NULL,
@@ -150,14 +153,14 @@ assemble_panel <- function(
     
     ## Set up full canvas for this set
     full_canvas <- image_blank(
-        sum(panel_dimensions$col_widths)  + (ncol-1) * separation, 
-        sum(panel_dimensions$row_heights) + (nrow-1) * separation, 
+        sum(panel_dimensions$col_widths)  + (ncol-1) * panel_border + figure_border_left + figure_border_right, 
+        sum(panel_dimensions$row_heights) + (nrow-1) * panel_border + figure_border_top + figure_border_bottom, 
         color = border_colour
     )
     
     ## Add panels in at the right locations
-    current_width_px <- 0
-    current_height_px <- 0
+    current_width_px <- figure_border_left
+    current_height_px <- figure_border_top
     current_panel <- 1
     composited <- full_canvas
     for (i in 1:nrow) {
@@ -204,11 +207,11 @@ assemble_panel <- function(
             
             ## Iterate column
             current_panel <- current_panel + 1
-            current_width_px <- current_width_px + panel_dimensions$col_widths[j] + separation
+            current_width_px <- current_width_px + panel_dimensions$col_widths[j] + panel_border
         }
         ## Iterate row, reset column to leftmost
-        current_width_px <- 0
-        current_height_px <- current_height_px + panel_dimensions$row_heights[i] + separation
+        current_width_px <- figure_border_left
+        current_height_px <- current_height_px + panel_dimensions$row_heights[i] + panel_border
     }
     
     composited
@@ -217,9 +220,8 @@ assemble_panel <- function(
 
 
 
-## Small function for making a single set of 4
-## Provide: vector of filenames, vector of corresponding channel names, dimensions of layout, list of which channels should be present in each panel (as the book reads), separation between channels in px
-create_figure <- function(
+## To make a figure with identical spacing between all panels and no subgroups etc
+create_simple_figure <- function(
         filenames_vector, 
         channels_vector, 
         colours_vector, 
@@ -227,10 +229,21 @@ create_figure <- function(
         nrow, 
         ncol, 
         channels_list, 
-        separation = 20, 
+        panel_border = 20, 
+        figure_border_text = 100,
+        figure_border_plain = 20,
         folder = NULL, 
         background_colour = "#000000", 
         border_colour = "#FFFFFF",
+        row_titles = NULL,
+        row_titles_position = "left",
+        col_titles = NULL,
+        col_titles_position = "top",
+        titles_colour = "#000000",
+        titles_font = "",
+        titles_size = 75,
+        titles_style = "normal",
+        titles_weight = 400,
         labels_top = NULL,
         labels_bottom = NULL,
         labels_colours_top = "#FFFFFF",
@@ -253,6 +266,38 @@ create_figure <- function(
         if (length(labels_bottom) != length(labels_colours_bottom)) {abort(paste0("Length of labels colour vector must be 1 or the same length as labels vector. Current lengths: ", paste(length(labels_bottom), length(labels_colours_bottom), sep = ", ")))}
         if (length(labels_bottom) != length(channels_list)) {abort(paste0("Labels vector must be NULL or the same lengths as channels list. Current lengths: ", paste(length(labels_bottom), length(channels_list), sep = ", ")))}
     }
+    ## From presence and position of row/col titles, determine effective panel borders
+    if (!any(is.null(row_titles)) && !any(is.na(row_titles))) {
+        if (tolower(row_titles_position) %in% c("left", "l", "west", "w")) {
+            figure_border_left <- figure_border_text
+            figure_border_right <- figure_border_plain
+        } else if (tolower(row_titles_position) %in% c("right", "r", "east", "e")) {
+            figure_border_left <- figure_border_plain
+            figure_border_right <- figure_border_text
+        } else {
+            abort(paste("Left/right row titles position not recognised:", row_titles_position))
+        }
+    } else {
+        print("no row titles")
+        figure_border_left <- figure_border_plain
+        figure_border_right <- figure_border_plain
+    }
+    if (!any(is.null(col_titles)) && !any(is.na(col_titles))) {
+        if (tolower(col_titles_position) %in% c("top", "t", "north", "n")) {
+            figure_border_top <- figure_border_text
+            figure_border_bottom <- figure_border_plain
+        } else if (tolower(col_titles_position) %in% c("bottom", "b", "south", "s")) {
+            figure_border_top <- figure_border_plain
+            figure_border_bottom <- figure_border_text
+        } else {
+            abort(paste("Top/bottom col titles position not recognised:", col_titles_position))
+        }
+    } else {
+        print("no col titles")
+        figure_border_top <- figure_border_plain
+        figure_border_bottom <- figure_border_plain
+    }
+    print(c(figure_border_left, figure_border_right, figure_border_top, figure_border_bottom))
     
     
     ## Read in images
@@ -286,11 +331,15 @@ create_figure <- function(
         )
     })
     
-    assemble_panel(
+    assemble_panels(
         panels_list,
         nrow = nrow,
         ncol = ncol,
-        separation = separation,
+        panel_border = panel_border,
+        figure_border_top = figure_border_top,
+        figure_border_bottom = figure_border_bottom,
+        figure_border_left = figure_border_left,
+        figure_border_right = figure_border_right,
         background_colour = background_colour,
         border_colour = border_colour,
         labels_top = labels_top,
@@ -327,20 +376,22 @@ channels_list <- list(
 )
 
 
-create_figure(
+create_simple_figure(
     c("EXO1_Day14_main_hoechst.tiff", "EXO1_Day14_main_map2.tiff", "EXO1_Day14_main_target.tiff"),
     c("H", "M", "T"),
     c("#0000FF", "#FF0000", "#00FF00"),
     c(100, 100, 100),
     nrow = 2, 
     ncol = 2,
+    row_titles = c("left", "right"),
+    col_titles = c("top", "bottom"),
     channels_list = list(
         c("H", "T", "M"),
         "H",
         "M",
         "T"
     ),
-    separation = 20,
+    panel_border = 20,
     folder = "imagej_export_max",
     background_colour = "#000000",
     border_colour = "#FFFFFF",
