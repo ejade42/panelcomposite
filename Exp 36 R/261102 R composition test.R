@@ -116,6 +116,29 @@ check_panel_dimensions <- function(dimensions_list, panels_count, nrow, ncol) {
     list(col_widths = col_widths, row_heights = row_heights)
 }
 
+## Function for determining offsets based on a capital E
+calculate_E_offset <- function(font_size, font_family, font_style, font_weight) {
+    mat <- image_blank(200, 200, "white") |>
+        image_annotate("E", size = font_size, font = font_family, style = font_style, weight = font_weight, location = "+0+0") |>
+        as.raster()
+    
+    ## Locate non-white pixel indices (the ink of 'E')
+    ink_pixels <- which(mat != "#ffffff" & mat != "#ffffffff", arr.ind = TRUE)
+    
+    ## Compute 0-indexed pixel offsets relative to top-left (0,0)
+    e_top    <- min(ink_pixels[, 1]) - 1
+    e_bottom <- max(ink_pixels[, 1])
+    e_left   <- min(ink_pixels[, 2]) #- 1    ## The -1 is technically correct, but the letters render with a very dim left edge so bumping that by 1 to the first bright pixel
+    e_right  <- max(ink_pixels[, 2])
+    
+    return(list(
+        left   = e_left,
+        top    = e_top,
+        bottom = e_bottom,
+        right  = e_right
+    ))
+}
+
 
 
 ## Function for assembling panels from a panels_list
@@ -123,6 +146,15 @@ assemble_panels <- function(
         panels_list,
         nrow,
         ncol,
+        row_titles = NULL,
+        row_titles_position = "west",
+        col_titles = NULL,
+        col_titles_position = "north",
+        titles_colour = "#000000",
+        titles_font = "",
+        titles_size = 75,
+        titles_style = "normal",
+        titles_weight = 400,
         panel_border = 20, 
         figure_border_top = 100,
         figure_border_left = 100,
@@ -158,6 +190,11 @@ assemble_panels <- function(
         color = border_colour
     )
     
+    ## Get offsets
+    labels_top_E <- calculate_E_offset(labels_size_top, labels_font_top, labels_style_top, labels_weight_top)
+    labels_bottom_E <- calculate_E_offset(labels_size_bottom, labels_font_bottom, labels_style_bottom, labels_weight_bottom)
+    titles_E <- calculate_E_offset(titles_size, titles_font, titles_style, titles_weight)
+    
     ## Add panels in at the right locations
     current_width_px <- figure_border_left
     current_height_px <- figure_border_top
@@ -173,7 +210,7 @@ assemble_panels <- function(
                     this_panel, 
                     text = labels_top[current_panel], 
                     color = labels_colours_top[current_panel], 
-                    location = paste0("+", labels_position_top, "+", labels_position_top), 
+                    location = paste0("+", labels_position_top - labels_top_E$left, "+", labels_position_top - labels_top_E$top), 
                     gravity = "northwest",
                     font = labels_font_top,
                     style = labels_style_top,
@@ -186,12 +223,26 @@ assemble_panels <- function(
                     this_panel, 
                     text = labels_bottom[current_panel], 
                     color = labels_colours_bottom[current_panel], 
-                    location = paste0("+", labels_position_bottom, "+", labels_position_bottom), 
-                    gravity = "southwest",
+                    location = paste0("+", labels_position_bottom - labels_bottom_E$left, "+", panel_dimensions$row_heights[i] - labels_position_bottom - labels_bottom_E$bottom), 
+                    gravity = "northwest",
                     font = labels_font_bottom,
                     style = labels_style_bottom,
                     weight = labels_weight_bottom,
                     size = labels_size_bottom
+                )
+            }
+            if (i == 1 && !any(is.null(col_titles)) && !any(is.na(col_titles))) {
+                print("adding title")
+                this_panel <- image_annotate(
+                    this_panel,
+                    text = col_titles[j],
+                    color = titles_colour,
+                    style = titles_style,
+                    font = titles_font,
+                    weight = titles_weight,
+                    size = titles_size,
+                    location = paste0("+0+", panel_dimensions$row_heights[i]-100),  ## bear in mind i==1
+                    gravity = col_titles_position,
                 )
             }
             
@@ -271,9 +322,11 @@ create_simple_figure <- function(
         if (tolower(row_titles_position) %in% c("left", "l", "west", "w")) {
             figure_border_left <- figure_border_text
             figure_border_right <- figure_border_plain
+            row_titles_position <- "east"
         } else if (tolower(row_titles_position) %in% c("right", "r", "east", "e")) {
             figure_border_left <- figure_border_plain
             figure_border_right <- figure_border_text
+            row_titles_position <- "west"
         } else {
             abort(paste("Left/right row titles position not recognised:", row_titles_position))
         }
@@ -286,9 +339,11 @@ create_simple_figure <- function(
         if (tolower(col_titles_position) %in% c("top", "t", "north", "n")) {
             figure_border_top <- figure_border_text
             figure_border_bottom <- figure_border_plain
+            col_titles_position <- "south"
         } else if (tolower(col_titles_position) %in% c("bottom", "b", "south", "s")) {
             figure_border_top <- figure_border_plain
             figure_border_bottom <- figure_border_text
+            col_titles_position <- "north"
         } else {
             abort(paste("Top/bottom col titles position not recognised:", col_titles_position))
         }
@@ -335,6 +390,15 @@ create_simple_figure <- function(
         panels_list,
         nrow = nrow,
         ncol = ncol,
+        row_titles = row_titles,
+        row_titles_position = row_titles_position,
+        col_titles = col_titles,
+        col_titles_position = col_titles_position,
+        titles_colour = titles_colour,
+        titles_font = titles_font,
+        titles_size = titles_size,
+        titles_style = titles_style,
+        titles_weight = titles_weight,
         panel_border = panel_border,
         figure_border_top = figure_border_top,
         figure_border_bottom = figure_border_bottom,
@@ -383,8 +447,10 @@ create_simple_figure(
     c(100, 100, 100),
     nrow = 2, 
     ncol = 2,
-    row_titles = c("left", "right"),
-    col_titles = c("top", "bottom"),
+    col_titles = c("left", "right"),
+    row_titles = c("top", "bottom"),
+    titles_size = 25,
+    titles_colour = "#FFFF00",
     channels_list = list(
         c("H", "T", "M"),
         "H",
@@ -395,7 +461,7 @@ create_simple_figure(
     folder = "imagej_export_max",
     background_colour = "#000000",
     border_colour = "#FFFFFF",
-    labels_top = c("A", "B", "C", "D"),
+    labels_top = c("A", "B", "C", "E"),
     labels_bottom = c("Merge", "Hoechst", "MAP2", "EXO1"),
     labels_colours_bottom = c("#FFFFFF", "#0000FF", "#FF0000", "#00FF00"),
     labels_position = 30
