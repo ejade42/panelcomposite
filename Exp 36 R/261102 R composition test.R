@@ -116,9 +116,110 @@ check_panel_dimensions <- function(dimensions_list, panels_count, nrow, ncol) {
     list(col_widths = col_widths, row_heights = row_heights)
 }
 
+
+
 ## Small function for making a single set of 4
 ## Provide: vector of filenames, vector of corresponding channel names, dimensions of layout, list of which channels should be present in each panel (as the book reads), separation between channels in px
-assemble_panels <- function(
+assemble_panel <- function(
+        panels_list,
+        nrow,
+        ncol,
+        separation = 20, 
+        background_colour = "#000000", 
+        border_colour = "#FFFFFF",
+        labels_top = NULL,
+        labels_bottom = NULL,
+        labels_colours_top = "#FFFFFF",
+        labels_colours_bottom = "#FFFFFF",
+        labels_font_top = "",
+        labels_font_bottom = "",
+        labels_size_top = 50,
+        labels_size_bottom = 50,
+        labels_position_top = 20,
+        labels_position_bottom = 20,
+        labels_style_top = "normal",
+        labels_style_bottom = "normal",
+        labels_weight_top = 400,
+        labels_weight_bottom = 400
+) {
+    panels_count <- length(panels_list)
+    
+    ## Extract dimensions and check they are consistent within individual cols and rows
+    panel_dimensions_list <- get_image_dimensions(panels_list)
+    panel_dimensions <- check_panel_dimensions(panel_dimensions_list, panels_count, nrow, ncol)
+    
+    ## Set up full canvas for this set
+    full_canvas <- image_blank(
+        sum(panel_dimensions$col_widths)  + (ncol-1) * separation, 
+        sum(panel_dimensions$row_heights) + (nrow-1) * separation, 
+        color = border_colour
+    )
+    
+    ## Add panels in at the right locations
+    current_width_px <- 0
+    current_height_px <- 0
+    current_panel <- 1
+    composited <- full_canvas
+    for (i in 1:nrow) {
+        for (j in 1:ncol) {
+            this_panel <- panels_list[[current_panel]]
+            
+            ## Add labels to panel
+            if (!any(is.null(labels_top)) && !any(is.na(labels_top))) {
+                this_panel <- image_annotate(
+                    this_panel, 
+                    text = labels_top[current_panel], 
+                    color = labels_colours_top[current_panel], 
+                    location = paste0("+", labels_position_top, "+", labels_position_top), 
+                    gravity = "northwest",
+                    font = labels_font_top,
+                    style = labels_style_top,
+                    weight = labels_weight_top,
+                    size = labels_size_top
+                )
+            }
+            if (!any(is.null(labels_bottom)) && !any(is.na(labels_bottom))) {
+                this_panel <- image_annotate(
+                    this_panel, 
+                    text = labels_bottom[current_panel], 
+                    color = labels_colours_bottom[current_panel], 
+                    location = paste0("+", labels_position_bottom, "+", labels_position_bottom), 
+                    gravity = "southwest",
+                    font = labels_font_bottom,
+                    style = labels_style_bottom,
+                    weight = labels_weight_bottom,
+                    size = labels_size_bottom
+                )
+            }
+            
+            ## Add panel to image
+            composited <- image_composite(
+                composited,
+                this_panel,
+                offset = paste0("+", current_width_px, "+", current_height_px),
+                gravity = "northwest"
+            )
+            
+            
+            
+            ## Iterate column
+            current_panel <- current_panel + 1
+            current_width_px <- current_width_px + panel_dimensions$col_widths[j] + separation
+        }
+        ## Iterate row, reset column to leftmost
+        current_width_px <- 0
+        current_height_px <- current_height_px + panel_dimensions$row_heights[i] + separation
+    }
+    
+    composited
+}
+
+
+
+
+## Small function for making a single set of 4
+## Provide: vector of filenames, vector of corresponding channel names, dimensions of layout, list of which channels should be present in each panel (as the book reads), separation between channels in px
+create_figure <- function(
         filenames_vector, 
         channels_vector, 
         colours_vector, 
@@ -185,76 +286,28 @@ assemble_panels <- function(
         )
     })
     
-    panels_count <- length(panels_list)
-    
-    ## Extract dimensions and check they are consistent within individual cols and rows
-    panel_dimensions_list <- get_image_dimensions(panels_list)
-    panel_dimensions <- check_panel_dimensions(panel_dimensions_list, panels_count, nrow, ncol)
-    
-    ## Set up full canvas for this set
-    full_canvas <- image_blank(
-        sum(panel_dimensions$col_widths)  + (ncol-1) * separation, 
-        sum(panel_dimensions$row_heights) + (nrow-1) * separation, 
-        color = border_colour
+    assemble_panel(
+        panels_list,
+        nrow = nrow,
+        ncol = ncol,
+        separation = separation,
+        background_colour = background_colour,
+        border_colour = border_colour,
+        labels_top = labels_top,
+        labels_bottom = labels_bottom,
+        labels_colours_top = labels_colours_top,
+        labels_colours_bottom = labels_colours_bottom,
+        labels_font_top = labels_font,
+        labels_font_bottom = labels_font,
+        labels_size_top = labels_size,
+        labels_size_bottom = labels_size,
+        labels_position_top = labels_position,
+        labels_position_bottom = labels_position,
+        labels_style_top = labels_style,
+        labels_style_bottom = labels_style,
+        labels_weight_top = labels_weight,
+        labels_weight_bottom = labels_weight
     )
-    
-    ## Add panels in at the right locations
-    current_width_px <- 0
-    current_height_px <- 0
-    current_panel <- 1
-    composited <- full_canvas
-    for (i in 1:nrow) {
-        for (j in 1:ncol) {
-            this_panel <- panels_list[[current_panel]]
-            
-            ## Add labels to panel
-            if (!any(is.null(labels_top)) && !any(is.na(labels_top))) {
-                this_panel <- image_annotate(
-                    this_panel, 
-                    text = labels_top[current_panel], 
-                    color = labels_colours_top[current_panel], 
-                    location = paste0("+", labels_position, "+", labels_position), 
-                    gravity = "northwest",
-                    font = labels_font,
-                    style = labels_style,
-                    weight = labels_weight,
-                    size = labels_size
-                )
-            }
-            if (!any(is.null(labels_bottom)) && !any(is.na(labels_bottom))) {
-                this_panel <- image_annotate(
-                    this_panel, 
-                    text = labels_bottom[current_panel], 
-                    color = labels_colours_bottom[current_panel], 
-                    location = paste0("+", labels_position, "+", labels_position), 
-                    gravity = "southwest",
-                    font = labels_font,
-                    style = labels_style,
-                    weight = labels_weight,
-                    size = labels_size
-                )
-            }
-            
-            ## Add panel to image
-            composited <- image_composite(
-                composited,
-                this_panel,
-                offset = paste0("+", current_width_px, "+", current_height_px),
-                gravity = "northwest"
-            )
-            
-            
-            
-            ## Iterate column
-            current_panel <- current_panel + 1
-            current_width_px <- current_width_px + panel_dimensions$col_widths[j] + separation
-        }
-        ## Iterate row, reset column to leftmost
-        current_width_px <- 0
-        current_height_px <- current_height_px + panel_dimensions$row_heights[i] + separation
-    }
-    
-    composited
 }
 
 
@@ -274,7 +327,7 @@ channels_list <- list(
 )
 
 
-assemble_panels(
+create_figure(
     c("EXO1_Day14_main_hoechst.tiff", "EXO1_Day14_main_map2.tiff", "EXO1_Day14_main_target.tiff"),
     c("H", "M", "T"),
     c("#0000FF", "#FF0000", "#00FF00"),
