@@ -118,7 +118,7 @@ check_panel_dimensions <- function(dimensions_list, panels_count, nrow, ncol) {
 
 ## Function for determining offsets based on a capital E
 calculate_E_offset <- function(font_size, font_family, font_style, font_weight) {
-    mat <- image_blank(200, 200, "white") |>
+    mat <- image_blank(ceiling(font_size * 2), ceiling(font_size * 2), "white") |>
         image_annotate("E", size = font_size, font = font_family, style = font_style, weight = font_weight, location = "+0+0") |>
         as.raster()
     
@@ -139,6 +139,15 @@ calculate_E_offset <- function(font_size, font_family, font_style, font_weight) 
     ))
 }
 
+## Function for calculating rendered text width
+get_text_width <- function(text, font_size, font_family, font_style, font_weight) {
+    canvas_dim <- ceiling(font_size * nchar(text) * 1.5)
+    img <- image_blank(canvas_dim, ceiling(font_size * 2), "white") |>
+        image_annotate(text, size = font_size, font = font_family, style = font_style, weight = font_weight, location = "+0+0")
+    mat <- as.raster(img)
+    ink_pixels <- which(mat != "#ffffff" & mat != "#ffffffff", arr.ind = TRUE)
+    return(max(ink_pixels[, 2]) - min(ink_pixels[, 2]) + 1)
+}
 
 
 ## Function for assembling panels from a panels_list
@@ -147,14 +156,15 @@ assemble_panels <- function(
         nrow,
         ncol,
         row_titles = NULL,
-        row_titles_position = "west",
+        row_titles_side = "left",
         col_titles = NULL,
-        col_titles_position = "north",
+        col_titles_side = "top",
         titles_colour = "#000000",
         titles_font = "",
         titles_size = 75,
         titles_style = "normal",
         titles_weight = 400,
+        titles_position = 20,
         panel_border = 20, 
         figure_border_top = 100,
         figure_border_left = 100,
@@ -231,20 +241,7 @@ assemble_panels <- function(
                     size = labels_size_bottom
                 )
             }
-            if (i == 1 && !any(is.null(col_titles)) && !any(is.na(col_titles))) {
-                print("adding title")
-                this_panel <- image_annotate(
-                    this_panel,
-                    text = col_titles[j],
-                    color = titles_colour,
-                    style = titles_style,
-                    font = titles_font,
-                    weight = titles_weight,
-                    size = titles_size,
-                    location = paste0("+0+", panel_dimensions$row_heights[i]-100),  ## bear in mind i==1
-                    gravity = col_titles_position,
-                )
-            }
+
             
             ## Add panel to image
             composited <- image_composite(
@@ -254,6 +251,45 @@ assemble_panels <- function(
                 gravity = "northwest"
             )
             
+            
+            ## Add titles to image if it is the right time - col titles when iterating over cols
+            if (!any(is.null(labels_bottom)) && !any(is.na(labels_bottom))) {
+                if (i == 1 && col_titles_side == "top") {
+                    this_title <- col_titles[j]
+                    this_title_width <- get_text_width(this_title, titles_size, titles_font, titles_style, titles_weight)
+                    this_title_x <- current_width_px + (panel_dimensions$col_widths[j] - this_title_width) / 2
+                    this_title_y <- current_height_px - titles_position - titles_E$bottom
+                    
+                    composited <- image_annotate(
+                        composited, 
+                        text = this_title, 
+                        color = titles_colour,
+                        location = paste0("+", this_title_x, "+", this_title_y),
+                        gravity = "northwest",
+                        font = titles_font,
+                        style = titles_style,
+                        weight = titles_weight,
+                        size = titles_size
+                    )
+                } else if (i == nrow && col_titles_side == "bottom") {
+                    this_title <- col_titles[j]
+                    this_title_width <- get_text_width(this_title, titles_size, titles_font, titles_style, titles_weight)
+                    this_title_x <- current_width_px + (panel_dimensions$col_widths[j] - this_title_width) / 2
+                    this_title_y <- current_height_px + panel_dimensions$row_heights[i] + titles_position - titles_E$top
+                    
+                    composited <- image_annotate(
+                        composited, 
+                        text = this_title, 
+                        color = titles_colour,
+                        location = paste0("+", this_title_x, "+", this_title_y),
+                        gravity = "northwest",
+                        font = titles_font,
+                        style = titles_style,
+                        weight = titles_weight,
+                        size = titles_size
+                    )
+                }
+            }
             
             
             ## Iterate column
@@ -287,14 +323,15 @@ create_simple_figure <- function(
         background_colour = "#000000", 
         border_colour = "#FFFFFF",
         row_titles = NULL,
-        row_titles_position = "left",
+        row_titles_side = "left",
         col_titles = NULL,
-        col_titles_position = "top",
+        col_titles_side = "top",
         titles_colour = "#000000",
         titles_font = "",
         titles_size = 75,
         titles_style = "normal",
         titles_weight = 400,
+        titles_position = 20,
         labels_top = NULL,
         labels_bottom = NULL,
         labels_colours_top = "#FFFFFF",
@@ -319,16 +356,16 @@ create_simple_figure <- function(
     }
     ## From presence and position of row/col titles, determine effective panel borders
     if (!any(is.null(row_titles)) && !any(is.na(row_titles))) {
-        if (tolower(row_titles_position) %in% c("left", "l", "west", "w")) {
+        if (tolower(row_titles_side) %in% c("left", "l", "west", "w")) {
             figure_border_left <- figure_border_text
             figure_border_right <- figure_border_plain
-            row_titles_position <- "east"
-        } else if (tolower(row_titles_position) %in% c("right", "r", "east", "e")) {
+            row_titles_side <- "left"
+        } else if (tolower(row_titles_side) %in% c("right", "r", "east", "e")) {
             figure_border_left <- figure_border_plain
             figure_border_right <- figure_border_text
-            row_titles_position <- "west"
+            row_titles_side <- "right"
         } else {
-            abort(paste("Left/right row titles position not recognised:", row_titles_position))
+            abort(paste("Left/right row titles position not recognised:", row_titles_side))
         }
     } else {
         print("no row titles")
@@ -336,16 +373,16 @@ create_simple_figure <- function(
         figure_border_right <- figure_border_plain
     }
     if (!any(is.null(col_titles)) && !any(is.na(col_titles))) {
-        if (tolower(col_titles_position) %in% c("top", "t", "north", "n")) {
+        if (tolower(col_titles_side) %in% c("top", "t", "north", "n")) {
             figure_border_top <- figure_border_text
             figure_border_bottom <- figure_border_plain
-            col_titles_position <- "south"
-        } else if (tolower(col_titles_position) %in% c("bottom", "b", "south", "s")) {
+            col_titles_side <- "top"
+        } else if (tolower(col_titles_side) %in% c("bottom", "b", "south", "s")) {
             figure_border_top <- figure_border_plain
             figure_border_bottom <- figure_border_text
-            col_titles_position <- "north"
+            col_titles_side <- "bottom"
         } else {
-            abort(paste("Top/bottom col titles position not recognised:", col_titles_position))
+            abort(paste("Top/bottom col titles position not recognised:", col_titles_side))
         }
     } else {
         print("no col titles")
@@ -391,14 +428,15 @@ create_simple_figure <- function(
         nrow = nrow,
         ncol = ncol,
         row_titles = row_titles,
-        row_titles_position = row_titles_position,
+        row_titles_side = row_titles_side,
         col_titles = col_titles,
-        col_titles_position = col_titles_position,
+        col_titles_side = col_titles_side,
         titles_colour = titles_colour,
         titles_font = titles_font,
         titles_size = titles_size,
         titles_style = titles_style,
         titles_weight = titles_weight,
+        titles_position = titles_position,
         panel_border = panel_border,
         figure_border_top = figure_border_top,
         figure_border_bottom = figure_border_bottom,
@@ -447,10 +485,12 @@ create_simple_figure(
     c(100, 100, 100),
     nrow = 2, 
     ncol = 2,
-    col_titles = c("left", "right"),
+    col_titles = c("E-left", "E-right"),
+    col_titles_side = "bottom",
     row_titles = c("top", "bottom"),
-    titles_size = 25,
-    titles_colour = "#FFFF00",
+    titles_size = 75,
+    titles_colour = "#000000",
+    titles_position = 20,
     channels_list = list(
         c("H", "T", "M"),
         "H",
