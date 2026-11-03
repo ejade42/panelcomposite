@@ -158,40 +158,44 @@ get_text_width <- function(text, font_size, font_family, font_style, font_weight
 
 ## Function for assembling panels from a panels_list
 assemble_panels <- function(
-        panels_list,
-        nrow,
-        ncol,
-        row_titles = NULL,
-        row_titles_side = "left",
-        col_titles = NULL,
-        col_titles_side = "top",
-        titles_colour = "#000000",
-        titles_font = "",
-        titles_size = 75,
-        titles_style = "normal",
-        titles_weight = 400,
-        titles_position = 20,
-        panel_border = 20, 
-        figure_border_top = 100,
-        figure_border_left = 100,
-        figure_border_bottom = 20,
-        figure_border_right = 20,
-        background_colour = "#000000", 
-        border_colour = "#FFFFFF",
-        labels_top = NULL,
-        labels_bottom = NULL,
-        labels_colours_top = "#FFFFFF",
-        labels_colours_bottom = "#FFFFFF",
-        labels_font_top = "",
-        labels_font_bottom = "",
-        labels_size_top = 50,
-        labels_size_bottom = 50,
-        labels_position_top = 20,
-        labels_position_bottom = 20,
-        labels_style_top = "normal",
-        labels_style_bottom = "normal",
-        labels_weight_top = 400,
-        labels_weight_bottom = 400
+    panels_list,
+    nrow,
+    ncol,
+    row_titles = NULL,
+    row_titles_side = "left",
+    row_titles_bar_size = 0,
+    row_titles_bar_colour = "#000000",
+    col_titles = NULL,
+    col_titles_side = "top",
+    col_titles_bar_size = 0,
+    col_titles_bar_colour = "#000000",
+    titles_colour = "#000000",
+    titles_font = "",
+    titles_size = 75,
+    titles_style = "normal",
+    titles_weight = 400,
+    titles_position = 20,
+    panel_border = 20, 
+    figure_border_top = 100,
+    figure_border_left = 100,
+    figure_border_bottom = 20,
+    figure_border_right = 20,
+    background_colour = "#000000", 
+    border_colour = "#FFFFFF",
+    labels_top = NULL,
+    labels_bottom = NULL,
+    labels_colours_top = "#FFFFFF",
+    labels_colours_bottom = "#FFFFFF",
+    labels_font_top = "",
+    labels_font_bottom = "",
+    labels_size_top = 50,
+    labels_size_bottom = 50,
+    labels_position_top = 20,
+    labels_position_bottom = 20,
+    labels_style_top = "normal",
+    labels_style_bottom = "normal",
+    labels_weight_top = 400,
+    labels_weight_bottom = 400
 ) {
     panels_count <- length(panels_list)
     
@@ -262,12 +266,22 @@ assemble_panels <- function(
             
             
             ## Add titles to image if it is the right time - col titles when iterating over cols
-            if (!any(is.null(col_titles)) && !any(is.na(col_titles))) {
-                if (i == 1 && col_titles_side == "top") {
+            if (i == 1 && col_titles_side == "top") {
+                if (col_titles_bar_size > 0) {
+                    bar <- image_blank(height = col_titles_bar_size, width = panel_dimensions$row_heights[i], color = col_titles_bar_colour)
+                    composited <- image_composite(
+                        composited,
+                        bar,
+                        offset = paste0("+", current_width_px, "+", current_height_px - 2*col_titles_bar_size),
+                        gravity = "northwest"
+                    )
+                }
+                
+                if (!any(is.null(col_titles)) && !any(is.na(col_titles))) {
                     this_title <- col_titles[j]
                     this_title_width <- get_text_width(this_title, titles_size, titles_font, titles_style, titles_weight)
                     this_title_x <- current_width_px + (panel_dimensions$col_widths[j] - this_title_width) / 2
-                    this_title_y <- current_height_px - titles_position - titles_E$bottom
+                    this_title_y <- current_height_px - titles_position - titles_E$bottom - 2*col_titles_bar_size
                     
                     composited <- image_annotate(
                         composited, 
@@ -280,11 +294,23 @@ assemble_panels <- function(
                         weight = titles_weight,
                         size = titles_size
                     )
-                } else if (i == nrow && col_titles_side == "bottom") {
+                } 
+            } else if (i == nrow && col_titles_side == "bottom") {
+                if (col_titles_bar_size > 0) {
+                    bar <- image_blank(height = col_titles_bar_size, width = panel_dimensions$row_heights[i], color = col_titles_bar_colour)
+                    composited <- image_composite(
+                        composited,
+                        bar,
+                        offset = paste0("+", current_width_px, "+", current_height_px + panel_dimensions$row_heights[i] + col_titles_bar_size),
+                        gravity = "northwest"
+                    )
+                }
+
+                if (!any(is.null(col_titles)) && !any(is.na(col_titles))) {
                     this_title <- col_titles[j]
                     this_title_width <- get_text_width(this_title, titles_size, titles_font, titles_style, titles_weight)
                     this_title_x <- current_width_px + (panel_dimensions$col_widths[j] - this_title_width) / 2
-                    this_title_y <- current_height_px + panel_dimensions$row_heights[i] + titles_position - titles_E$top
+                    this_title_y <- current_height_px + panel_dimensions$row_heights[i] + titles_position - titles_E$top + col_titles_bar_size
                     
                     composited <- image_annotate(
                         composited, 
@@ -302,11 +328,21 @@ assemble_panels <- function(
             
             
             ## Add titles to image if it is the right time - row titles when iterating over row
-            if (!any(is.null(row_titles)) && !any(is.na(row_titles))) {
-                if (j == 1 && row_titles_side == "left") {
+            if (j == 1 && row_titles_side == "left") {
+                if (row_titles_bar_size > 0) {
+                    bar <- image_blank(width = row_titles_bar_size, height = panel_dimensions$row_heights[i], color = row_titles_bar_colour)
+                    composited <- image_composite(
+                        composited,
+                        bar,
+                        offset = paste0("+", current_width_px - 2*row_titles_bar_size, "+", current_height_px),
+                        gravity = "northwest"
+                    )
+                }
+                
+                if (!any(is.null(row_titles)) && !any(is.na(row_titles))) {
                     this_title <- row_titles[i]
                     this_title_width <- get_text_width(this_title, titles_size, titles_font, titles_style, titles_weight)
-                    this_title_x <- current_width_px - titles_position - titles_E_270$width
+                    this_title_x <- current_width_px - titles_position - titles_E_270$width - 2*row_titles_bar_size
                     this_title_y <- current_height_px + (panel_dimensions$row_heights[i] + this_title_width) / 2
                     
                     composited <- image_annotate(
@@ -321,10 +357,22 @@ assemble_panels <- function(
                         weight = titles_weight,
                         size = titles_size
                     )
-                } else if (j == ncol && row_titles_side == "right") {
+                }
+            } else if (j == ncol && row_titles_side == "right") {
+                if (row_titles_bar_size > 0) {
+                    bar <- image_blank(width = row_titles_bar_size, height = panel_dimensions$row_heights[i], color = row_titles_bar_colour)
+                    composited <- image_composite(
+                        composited,
+                        bar,
+                        offset = paste0("+", current_width_px + panel_dimensions$col_widths[j] + row_titles_bar_size, "+", current_height_px),
+                        gravity = "northwest"
+                    )
+                }
+                
+                if (!any(is.null(row_titles)) && !any(is.na(row_titles))) {
                     this_title <- row_titles[i]
                     this_title_width <- get_text_width(this_title, titles_size, titles_font, titles_style, titles_weight)
-                    this_title_x <- current_width_px + titles_position - titles_E_90$left + panel_dimensions$col_widths[j]
+                    this_title_x <- current_width_px + titles_position - titles_E_90$left + panel_dimensions$col_widths[j] + 2*row_titles_bar_size
                     this_title_y <- current_height_px + (panel_dimensions$row_heights[i] - this_title_width) / 2
                     
                     composited <- image_annotate(
@@ -341,6 +389,10 @@ assemble_panels <- function(
                     )
                 }
             }
+            
+            
+            
+            
             
             
             ## Iterate column
@@ -363,40 +415,40 @@ assemble_panels <- function(
 
 ## To make a figure with identical spacing between all panels and no subgroups etc
 create_simple_figure <- function(
-        filenames_vector, 
-        channels_vector, 
-        colours_vector, 
-        brightness_vector, 
-        nrow, 
-        ncol, 
-        channels_list, 
-        panel_border = 20, 
-        figure_border_text = 100,
-        figure_border_plain = 20,
-        folder = NULL, 
-        background_colour = "#000000", 
-        border_colour = "#FFFFFF",
-        row_titles = NULL,
-        row_titles_side = "left",
-        row_titles_bar = FALSE,
-        col_titles = NULL,
-        col_titles_side = "top",
-        col_titles_bar = FALSE,
-        titles_colour = "#000000",
-        titles_font = "",
-        titles_size = 75,
-        titles_style = "normal",
-        titles_weight = 400,
-        titles_position = 20,
-        labels_top = NULL,
-        labels_bottom = NULL,
-        labels_colours_top = "#FFFFFF",
-        labels_colours_bottom = "#FFFFFF",
-        labels_font = "",
-        labels_size = 50,
-        labels_position = 20,
-        labels_style = "normal",
-        labels_weight = 400
+    filenames_vector, 
+    channels_vector, 
+    colours_vector, 
+    brightness_vector, 
+    nrow, 
+    ncol, 
+    channels_list, 
+    panel_border = 20, 
+    figure_border_text = 100,
+    figure_border_plain = 20,
+    folder = NULL, 
+    background_colour = "#000000", 
+    border_colour = "#FFFFFF",
+    row_titles = NULL,
+    row_titles_side = "left",
+    col_titles = NULL,
+    col_titles_side = "top",
+    titles_bar_size = 0,
+    titles_bar_colour = "#000000",
+    titles_colour = "#000000",
+    titles_font = "",
+    titles_size = 75,
+    titles_style = "normal",
+    titles_weight = 400,
+    titles_position = 20,
+    labels_top = NULL,
+    labels_bottom = NULL,
+    labels_colours_top = "#FFFFFF",
+    labels_colours_bottom = "#FFFFFF",
+    labels_font = "",
+    labels_size = 50,
+    labels_position = 20,
+    labels_style = "normal",
+    labels_weight = 400
 ) {
     ## Process labels
     if (!any(is.null(labels_top)) && !any(is.na(labels_top))) {
@@ -485,8 +537,12 @@ create_simple_figure <- function(
         ncol = ncol,
         row_titles = row_titles,
         row_titles_side = row_titles_side,
+        row_titles_bar_size = titles_bar_size,
+        row_titles_bar_colour = titles_bar_colour,
         col_titles = col_titles,
         col_titles_side = col_titles_side,
+        col_titles_bar_size = titles_bar_size,
+        col_titles_bar_colour = titles_bar_colour,
         titles_colour = titles_colour,
         titles_font = titles_font,
         titles_size = titles_size,
@@ -544,7 +600,8 @@ create_simple_figure(
     col_titles = c("E-left-p", "E-right"),
     col_titles_side = "top",
     row_titles = c("E-top", "E-bottom"),
-    row_titles_side = "right",
+    row_titles_side = "left",
+    titles_bar_size = 10,
     titles_size = 75,
     titles_colour = "#000000",
     titles_position = 20,
@@ -555,6 +612,7 @@ create_simple_figure(
         "T"
     ),
     panel_border = 20,
+    figure_border_text = 100,
     folder = "imagej_export_max",
     background_colour = "#000000",
     border_colour = "#FFFFFF",
