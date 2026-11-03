@@ -149,14 +149,10 @@ assemble_panels <- function(filenames_vector, channels_vector, colours_vector, b
         )
     })
     
-    return(panels_list)
-    
-    ## This all needs to happen later once the images have been merged into panels - the ordered list comes from channels_list,
-    ## whereas input images can be supplied in any order and any number and are then pulled by channel name into each panel
     panels_count <- length(panels_list)
     
     ## Extract dimensions and check they are consistent within individual cols and rows
-    panel_dimensions_list <- get_panel_dimensions(panels_list)
+    panel_dimensions_list <- get_image_dimensions(panels_list)
     panel_dimensions <- check_panel_dimensions(panel_dimensions_list, panels_count, nrow, ncol)
     
     ## Set up full canvas for this set
@@ -167,7 +163,27 @@ assemble_panels <- function(filenames_vector, channels_vector, colours_vector, b
     )
     
     ## Add panels in at the right locations
+    current_width_px <- 0
+    current_height_px <- 0
+    current_panel <- 1
+    composited <- full_canvas
+    for (i in 1:nrow) {
+        for (j in 1:ncol) {
+            composited <- image_composite(
+                composited,
+                panels_list[[current_panel]],
+                offset = paste0("+", current_width_px, "+", current_height_px),
+                gravity = "northwest"
+            )
+            
+            current_panel <- current_panel + 1
+            current_width_px <- current_width_px + panel_dimensions$col_widths[j] + separation
+        }
+        current_width_px <- 0
+        current_height_px <- current_height_px + panel_dimensions$row_heights[i] + separation
+    }
     
+    composited
 }
 
 
@@ -191,7 +207,7 @@ assemble_panels(
     c("EXO1_Day14_main_hoechst.tiff", "EXO1_Day14_main_map2.tiff", "EXO1_Day14_main_target.tiff"),
     c("H", "M", "T"),
     c("blue", "red", "green"),
-    rep(100, 3),
+    c(100, 100, 1000),
     nrow = 2, 
     ncol = 2,
     channels_list = list(
