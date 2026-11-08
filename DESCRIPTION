@@ -9,6 +9,9 @@ Authors@R:
         comment = c(ORCID = "0009-0003-7761-5425")
     )
 Description: Uses 'magick' to take greyscale immunohistochemistry or immunocytochemistry images, colour them according to chanel, and arrange them into figure panels.
+Imports:
+    magick,
+    rlang
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
