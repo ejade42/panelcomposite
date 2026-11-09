@@ -40,12 +40,20 @@ brightness modulation applied.
 ## Examples
 
 ``` r
-grayscale <- image_read(system.file("extdata/images/cropped_Fus-GGC98-R.tif", package = "panelcomposite"))
-#> Error in image_read(system.file("extdata/images/cropped_Fus-GGC98-R.tif",     package = "panelcomposite")): could not find function "image_read"
+grayscale <- magick::image_read(system.file("extdata/images/cropped_Fus-GGC98-R.tif", package = "panelcomposite"))
 multiply_by_colour(grayscale, "#FF0000")
-#> Error: object 'grayscale' not found
+#> # A tibble: 1 × 7
+#>   format width height colorspace matte filesize density
+#>   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+#> 1 png      280    210 sRGB       FALSE        0 +72x+72
 multiply_by_colour(grayscale, brightness = 200)
-#> Error: object 'grayscale' not found
+#> # A tibble: 1 × 7
+#>   format width height colorspace matte filesize density
+#>   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+#> 1 png      280    210 sRGB       FALSE        0 +72x+72
 multiply_by_colour(grayscale, colour_hex = "#00FFFF", brightness = 50)
-#> Error: object 'grayscale' not found
+#> # A tibble: 1 × 7
+#>   format width height colorspace matte filesize density
+#>   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+#> 1 png      280    210 sRGB       FALSE        0 +72x+72
 ```
