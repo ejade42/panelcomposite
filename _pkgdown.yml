@@ -40,9 +40,15 @@ navbar:
 reference:
 - title: Fluorescent microscopy panel compositing
 
+- subtitle: Main functions
+  desc: >
+    User-facing functions to access the functionality of the `panelcomposite` package
+  contents:
+  - assemble_panels
+
 - subtitle: Helper functions
   desc: >
-    Internal functinos used by the main user-facing functions
+    Internal functions used by the main user-facing functions
   contents:
   - calculate_E_offset
   - check_channel_dimensions

@@ -1,6 +1,6 @@
 Package: panelcomposite
 Title: Tools for compositing immunolabelling panels into figures
-Version: 0.0.0.9005
+Version: 0.0.0.9006
 Authors@R: 
     person(
         "Evelyn", "Jade", 

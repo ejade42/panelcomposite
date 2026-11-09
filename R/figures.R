@@ -1,4 +1,17 @@
-## Function for assembling panels from a panels_list
+#' Assemble panels from a list into a unified figure
+#'
+#' @description
+#' This major function takes a list of panels  in a grid-based figure,
+#' arranged left to right and then top to bottom, e.g. \preformatted{
+#' 1 2 3 4
+#' 5 6 7 8
+#' }
+#'
+#' It arranges the panels, inserts spaces between them and at the outer border,
+#' adds top and bottom labels within each panel, adds row and column labels on
+#' the outside of the figure, and optionally adds bars on the outside of each row/column.
+#'
+#' @export
 assemble_panels <- function(
     panels_list,
     nrow,
