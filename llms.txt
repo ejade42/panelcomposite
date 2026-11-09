@@ -13,9 +13,17 @@ they’re ever useful.
 
 ## Fluorescent microscopy panel compositing
 
+### Main functions
+
+User-facing functions to access the functionality of the
+`panelcomposite` package
+
+- [`assemble_panels()`](https://ejade42.github.io/panelcomposite/reference/assemble_panels.md)
+  : Assemble panels from a list into a unified figure
+
 ### Helper functions
 
-Internal functinos used by the main user-facing functions
+Internal functions used by the main user-facing functions
 
 - [`calculate_E_offset()`](https://ejade42.github.io/panelcomposite/reference/calculate_E_offset.md)
   :
