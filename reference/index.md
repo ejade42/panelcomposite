@@ -1,0 +1,29 @@
+# Package index
+
+## All functions
+
+- [`calculate_E_offset()`](calculate_E_offset.md) :
+
+  Calculate pixel location of a capital `E`
+
+- [`check_channel_dimensions()`](check_channel_dimensions.md) : Check
+  that all channels of the same panel have identical dimensions
+
+- [`check_panel_dimensions()`](check_panel_dimensions.md) : Check that
+  panels in the same column have the same width and panels in the same
+  row have the same height
+
+- [`get_image_dimensions()`](get_image_dimensions.md) : Determine the
+  pixel dimensions of images in a list
+
+- [`get_text_width()`](get_text_width.md) : Calculate width of rendered
+  text
+
+- [`merge_channels()`](merge_channels.md) : Merge a list of images
+  together
+
+- [`multiply_by_colour()`](multiply_by_colour.md) : Multiply a grayscale
+  image by a specified colour
+
+- [`read_many_images()`](read_many_images.md) : Read multiple images
+  into a list
