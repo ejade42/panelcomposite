@@ -1,4 +1,54 @@
-devtoourl: ~
+url: https://ejade42.github.io/panelcomposite/
 template:
   bootstrap: 5
+  includes: 
+    in_header: |
+      <link rel="stylesheet" href="extra.css">
+      <script src="extra.js"></script>
+  bslib:
+    pkgdown_navbar: ~
+  math-rendering: katex
 
+site:
+  build_all_versions: true
+  
+toc:
+  depth: 3
+
+home:
+  sidebar:
+    structure:
+      - links
+      - license
+      - citation
+      - authors
+      - dev
+
+navbar:
+  structure:
+    left:  [intro, reference, news, version]
+    right: [search, github, lightswitch]
+    
+  components:
+    version:
+      text: "Version"
+      menu:
+        - text: "Latest release"
+          href: https://ejade42.github.io/panelcomposite/
+
+
+reference:
+- title: Fluorescent microscopy panel compositing
+
+- subtitle: Helper functions
+  desc: >
+    Internal functinos used by the main user-facing functions
+  contents:
+  - calculate_E_offset
+  - check_channel_dimensions
+  - check_panel_dimensions
+  - get_image_dimensions
+  - get_text_width
+  - merge_channels
+  - multiply_by_colour
+  - read_many_images
