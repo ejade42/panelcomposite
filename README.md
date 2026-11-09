@@ -9,3 +9,5 @@ immunocytochemistry or immunohistochemistry. As with `ggDNAvis`, there
 are a few main user-facing functions and a lot of helper functions that
 users shouldn’t need to interface with, but are exported anyway in case
 they’re ever useful.
+
+EXTREME WIP NOT YET FUNCTIONAL!
