@@ -33,7 +33,7 @@ navbar:
     version:
       text: "Version"
       menu:
-        - text: "Latest release"
+        - text: "Latest dev"
           href: https://ejade42.github.io/panelcomposite/
 
 

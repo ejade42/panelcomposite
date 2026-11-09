@@ -1,5 +1,5 @@
 
-# panelcomposite
+# panelcomposite <a href="https://ejade42.github.io/panelcomposite/"><img src="man/figures/logo.png" align="right" height="138" alt="panelcomposite website" /></a>
 
 # 1 Introduction
 

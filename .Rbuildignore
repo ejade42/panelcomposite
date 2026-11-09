@@ -5,3 +5,7 @@
 ^docs$
 ^pkgdown$
 ^\.github$
+^man/figures/fluoro_merged.png$
+^man/figures/sticker_exported_full.png$
+^man/figures/sticker_exported_clean.png$
+^man/figures/sticker.af$
