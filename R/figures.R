@@ -1,12 +1,3 @@
-library(magick)
-library(rlang)
-dir <- "/Volumes/ScotterLab/Evelyn Jade/Experiments/260420 - Exp 36 - Combined MMR ICC"
-folder <- "imagej_export_max"
-setwd(dir)
-
-
-
-
 ## Function for assembling panels from a panels_list
 assemble_panels <- function(
     panels_list,
@@ -428,48 +419,48 @@ create_simple_figure <- function(
 
 
 ## Testing
-l <- read_many_images(c("EXO1_Day14_main_hoechst.tiff", "EXO1_Day00_main_map2.tiff", "EXO1_Day00_main_target.tiff"), "imagej_export_max")
-cv <- c("H", "M", "T")
-names(l) <- cv
-d <- get_image_dimensions(l)
-
-channels_list <- list(
-    c("H", "T", "M"),
-    "H",
-    "M",
-    "T"
-)
-
-
-create_simple_figure(
-    c("EXO1_Day14_main_hoechst.tiff", "EXO1_Day14_main_map2.tiff", "EXO1_Day14_main_target.tiff"),
-    c("H", "M", "T"),
-    c("#0000FF", "#FF0000", "#00FF00"),
-    c(100, 100, 100),
-    nrow = 2,
-    ncol = 2,
-    col_titles = c("E-left-p", "E-right"),
-    col_titles_side = "top",
-    row_titles = c("E-top", "E-bottom"),
-    row_titles_side = "left",
-    titles_bar_size = 10,
-    titles_size = 75,
-    titles_colour = "#000000",
-    titles_position = 20,
-    channels_list = list(
-        c("H", "T", "M"),
-        "H",
-        "M",
-        "T"
-    ),
-    panel_border = 20,
-    figure_border_text = 100,
-    folder = "imagej_export_max",
-    background_colour = "#000000",
-    border_colour = "#FFFFFF",
-    labels_top = c("A", "B", "C", "E"),
-    labels_colours_top = "#FFFFFF",
-    labels_bottom = c("Merge", "Hoechst", "MAP2", "EXO1"),
-    labels_colours_bottom = c("#FFFFFF", "#0000FF", "#FF0000", "#00FF00"),
-    labels_position = 30
-)
+#l <- read_many_images(c("EXO1_Day14_main_hoechst.tiff", "EXO1_Day00_main_map2.tiff", "EXO1_Day00_main_target.tiff"), "imagej_export_max")
+#cv <- c("H", "M", "T")
+#names(l) <- cv
+#d <- get_image_dimensions(l)
+#
+#channels_list <- list(
+#    c("H", "T", "M"),
+#    "H",
+#    "M",
+#    "T"
+#)
+#
+#
+#create_simple_figure(
+#    c("EXO1_Day14_main_hoechst.tiff", "EXO1_Day14_main_map2.tiff", "EXO1_Day14_main_target.tiff"),
+#    c("H", "M", "T"),
+#    c("#0000FF", "#FF0000", "#00FF00"),
+#    c(100, 100, 100),
+#    nrow = 2,
+#    ncol = 2,
+#    col_titles = c("E-left-p", "E-right"),
+#    col_titles_side = "top",
+#    row_titles = c("E-top", "E-bottom"),
+#    row_titles_side = "left",
+#    titles_bar_size = 10,
+#    titles_size = 75,
+#    titles_colour = "#000000",
+#    titles_position = 20,
+#    channels_list = list(
+#        c("H", "T", "M"),
+#        "H",
+#        "M",
+#        "T"
+#    ),
+#    panel_border = 20,
+#    figure_border_text = 100,
+#    folder = "imagej_export_max",
+#    background_colour = "#000000",
+#    border_colour = "#FFFFFF",
+#    labels_top = c("A", "B", "C", "E"),
+#    labels_colours_top = "#FFFFFF",
+#    labels_bottom = c("Merge", "Hoechst", "MAP2", "EXO1"),
+#    labels_colours_bottom = c("#FFFFFF", "#0000FF", "#FF0000", "#00FF00"),
+#    labels_position = 30
+#)
