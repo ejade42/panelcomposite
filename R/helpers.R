@@ -12,7 +12,7 @@
 #' @export
 #'
 #' @examples
-#' grayscale <- image_read(system.file("extdata/images/cropped_Fus-GGC98-R.tif", package = "panelcomposite"))
+#' grayscale <- magick::image_read(system.file("extdata/images/cropped_Fus-GGC98-R.tif", package = "panelcomposite"))
 #' multiply_by_colour(grayscale, "#FF0000")
 #' multiply_by_colour(grayscale, brightness = 200)
 #' multiply_by_colour(grayscale, colour_hex = "#00FFFF", brightness = 50)

@@ -1,6 +1,6 @@
 Package: panelcomposite
 Title: Tools for compositing immunolabelling panels into figures
-Version: 0.0.0.9006
+Version: 0.0.0.9007
 Authors@R: 
     person(
         "Evelyn", "Jade", 
@@ -19,4 +19,7 @@ RoxygenNote: 8.0.0
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-URL: https://ejade42.github.io/panelcomposite/
+LazyData: true
+Language: en-GB
+URL: https://ejade42.github.io/panelcomposite/, https://github.com/ejade42/panelcomposite
+BugReports: https://github.com/ejade42/panelcomposite/issues
