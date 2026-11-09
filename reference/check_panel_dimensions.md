@@ -31,7 +31,7 @@ check_panel_dimensions(dimensions_list, panels_count, nrow, ncol)
 
   `list of numeric vectors`. A list of length-2 numeric vectors storing
   the width and height of each panel in the figure, as produced by
-  [`get_image_dimensions()`](get_image_dimensions.md).
+  [`get_image_dimensions()`](https://ejade42.github.io/panelcomposite/reference/get_image_dimensions.md).
 
 - panels_count:
 

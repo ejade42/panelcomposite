@@ -1,17 +1,17 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
-<url><loc>/404.html</loc></url>
-<url><loc>/LICENSE-text.html</loc></url>
-<url><loc>/LICENSE.html</loc></url>
-<url><loc>/authors.html</loc></url>
-<url><loc>/index.html</loc></url>
-<url><loc>/reference/calculate_E_offset.html</loc></url>
-<url><loc>/reference/check_channel_dimensions.html</loc></url>
-<url><loc>/reference/check_panel_dimensions.html</loc></url>
-<url><loc>/reference/get_image_dimensions.html</loc></url>
-<url><loc>/reference/get_text_width.html</loc></url>
-<url><loc>/reference/index.html</loc></url>
-<url><loc>/reference/merge_channels.html</loc></url>
-<url><loc>/reference/multiply_by_colour.html</loc></url>
-<url><loc>/reference/read_many_images.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/404.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/LICENSE-text.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/LICENSE.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/authors.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/index.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/reference/calculate_E_offset.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/reference/check_channel_dimensions.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/reference/check_panel_dimensions.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/reference/get_image_dimensions.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/reference/get_text_width.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/reference/index.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/reference/merge_channels.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/reference/multiply_by_colour.html</loc></url>
+<url><loc>https://ejade42.github.io/panelcomposite/reference/read_many_images.html</loc></url>
 </urlset>
 
